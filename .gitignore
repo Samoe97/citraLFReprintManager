@@ -127,3 +127,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Google credentials
+samoeflasktest-c82acd1b6738.json
