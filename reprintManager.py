@@ -38,6 +38,72 @@ db = firestore.client()
 
 ##############################
 
+def newRequest() :
+
+  print('Opening new reprint request window.')
+
+  requestRoot = Toplevel()
+  requestRoot.title('New Reprint Request')
+
+  requestRootFrame = Frame(requestRoot)
+  requestRootFrame.pack(padx = 16, pady = 16, ipadx = 4)
+
+  requestTitle = Label(requestRootFrame, text = 'New Reprint Request', justify = 'left')
+  requestTitle.grid(column = 0, row = 0, sticky = 'W')
+
+  ###
+
+  requestNameLabel = Label(requestRootFrame, text = 'User Name: ', justify = 'left')
+  requestNameLabel.grid(column = 0, row = 1, pady = 4, sticky = 'W')
+
+  requestNameEntry = Entry(requestRootFrame, width = 48)
+  requestNameEntry.grid(column = 0, row = 2, columnspan = 2, pady = 4, ipady = 4, ipadx = 4, sticky = 'NEWS')
+  
+  ###
+
+  requestOrderLabel = Label(requestRootFrame, text = 'Order Number: ', justify = 'left')
+  requestOrderLabel.grid(column = 0, row = 3, pady = 4, sticky = 'W')
+
+  requestOrderEntry = Entry(requestRootFrame, width = 24)
+  requestOrderEntry.grid(column = 0, row = 4, pady = 4, ipadx = 4, ipady = 4, sticky = 'NEWS')
+
+  requestSkuLabel = Label(requestRootFrame, text = 'Sku: ', justify = 'left')
+  requestSkuLabel.grid(column = 1, row = 3, pady = 4, sticky = 'W')
+
+  requestSkuEntry = Entry(requestRootFrame, width = 24)
+  requestSkuEntry.grid(column = 1, row = 4, pady = 4, ipadx = 4, ipady = 4, sticky = 'NEWS')
+
+  ###
+
+  requestRoot.mainloop()
+
+def refresh() :
+
+  print('Refreshing')
+
+  reprintsRef = db.collection('reprints')
+  docs = reprintsRef.stream()
+
+  for item in reprintList.get_children():
+        reprintList.delete(item)
+
+  for doc in docs:
+    docObject = doc.to_dict()
+    docObject.update({'id' : doc.id})
+
+    tempQty = f'{docObject["qtyNeeded"]} / {docObject["qtytotal"]}'
+
+    values = [docObject['orderId'], docObject['itemId'], docObject['size'], tempQty, docObject['name'], docObject['reason'], docObject['status']]
+
+    reprintList.insert('', 'end',
+        values = values, tags = (docObject['status']))
+
+    reprintList.tag_configure('deleted', background=colors['deleted'])
+    reprintList.tag_configure('complete', background=colors['complete'])
+    reprintList.tag_configure('requested', background=colors['requested'])
+    reprintList.tag_configure('pulled', background=colors['pulled'])
+    reprintList.tag_configure('printed', background=colors['printed'])
+
 def pullFiles() :
 
   print('Pulling')
@@ -103,6 +169,8 @@ def pullFiles() :
       }
   StickerTool2.executeStickerSheetGenerator(params)
 
+  refresh()
+
 ##############################
 
 def startApp() :
@@ -111,22 +179,45 @@ def startApp() :
 
   global root
   root = Tk()
+  root.title('Citra Communications - Large Format Reprint Manager')
   rootFrame = Frame(root)
   rootFrame.grid(padx = 16, pady = 16, sticky = 'NEWS')
 
   root.grid_columnconfigure(0, weight = 1)
   root.grid_rowconfigure(0, weight = 1)
 
-  pullButton = Hoverbutton.HoverButton(rootFrame, root, text = 'Pull Requested Reprints', command = pullFiles)
-  pullButton.grid(ipadx = 16, ipady = 16)
+  rootFrame.grid_columnconfigure(0, weight = 1)
+  rootFrame.grid_rowconfigure(0, weight = 1)
+  rootFrame.grid_rowconfigure(1, weight = 1000)
+
+  headerFrame = Frame(rootFrame)
+  headerFrame.grid(row = 0, column = 0, sticky = 'NEWS')
+
+  headerFrame.grid_columnconfigure(0, weight = 1)
+  headerFrame.grid_columnconfigure(1, weight = 1)
+  headerFrame.grid_columnconfigure(2, weight = 1)
+  headerFrame.grid_rowconfigure(0, weight = 1)
+
+  requestButton = Hoverbutton.HoverButton(headerFrame, root, text = 'New Reprint', command = newRequest)
+  requestButton.grid(column = 0, row = 0, ipadx = 16, ipady = 16, sticky = 'NEWS', padx = 16, pady = 16)
+
+  pullButton = Hoverbutton.HoverButton(headerFrame, root, text = 'Pull Requested Reprints', command = pullFiles)
+  pullButton.grid(column = 1, row = 0, ipadx = 16, ipady = 16, sticky = 'NEWS', padx = 16, pady = 16)
+
+  refreshButton = Hoverbutton.HoverButton(headerFrame, root, text = 'Refresh', command = refresh)
+  refreshButton.grid(column = 2, row = 0, ipadx = 16, ipady = 16, sticky = 'NEWS', padx = 16, pady = 16)
 
   listFrame = Frame(rootFrame)
-  listFrame.grid(row = 1)
+  listFrame.grid(row = 1, column = 0, sticky = 'NEWS')
+
+  listFrame.grid_columnconfigure(0, weight = 1000)
+  listFrame.grid_columnconfigure(1, weight = 1)
+  listFrame.grid_rowconfigure(0, weight = 1)
 
   style = Style()
-  style.configure("treeviewStyle", rowheight = 32, font=('Roboto', 11))
-  style.layout("treeviewStyle", [('mtreeviewStyle.treearea', {'sticky': 'NEWS'})])
-  style.map('treeviewStyle', background=[('selected', '#BFBFBF')])
+  style.configure("treeview", rowheight = 48, font=('Segoe ui', 12))
+  style.layout("treeview", [('mtreeviewStyle.treearea', {'sticky': 'NEWS'})])
+  style.map('treeview', background=[('selected', '#BFBFBF')])
 
   style.configure("treeviewStyle",
                   background="#E1E1E1",
@@ -134,48 +225,37 @@ def startApp() :
                   rowheight=25,
                   fieldbackground="#E1E1E1")
 
-  reprintList = Treeview(listFrame, columns = ['Order', 'Sku', 'Submitter Name', 'Reason', 'Status'], selectmode = 'extended', style="treeviewStyle")
-  reprintList.grid(column = 0, row = 1, sticky = 'NEWS')
+  global reprintList
+
+  reprintList = Treeview(listFrame, columns = ['Order', 'Sku', 'Size', 'Quantity', 'Submitter Name', 'Reason', 'Status'], selectmode = 'extended', style="treeview")
+  reprintList.grid(column = 0, row = 0, sticky = 'NEWS')
 
   reprintList.heading('#0', text='', anchor = 'w')
   reprintList.heading('Order', text='Order', anchor = 'w')
   reprintList.heading('Sku', text ='Sku', anchor = 'w')
+  reprintList.heading('Size', text = 'Size', anchor = 'w')
+  reprintList.heading('Quantity', text = 'Quantity', anchor = 'w')
   reprintList.heading('Submitter Name', text='Submitter Name', anchor = 'w')
   reprintList.heading('Reason', text='Reason', anchor = 'w')
   reprintList.heading('Status', text='Status', anchor = 'w')
 
-  reprintList.column('#0', width = 128, minwidth = 96, anchor = 'w')
-  reprintList.column('Order', width = 128, minwidth = 96, anchor = 'w')
-  reprintList.column('Sku', width = 128, minwidth = 96, anchor = 'w')
-  reprintList.column('Submitter Name', width = 128, minwidth = 96, anchor = 'w')
-  reprintList.column('Reason', width = 96, minwidth = 96, anchor = 'w')
-  reprintList.column('Status', width = 96, minwidth = 96, anchor = 'w')
+  reprintList.column('#0', width = 16, minwidth = 16, anchor = 'w')
+  reprintList.column('Order', width = 200, minwidth = 96, anchor = 'w')
+  reprintList.column('Sku', width = 200, minwidth = 96, anchor = 'w')
+  reprintList.column('Size', width = 200, minwidth = 96, anchor = 'w')
+  reprintList.column('Quantity', width = 200, minwidth = 96, anchor = 'w')
+  reprintList.column('Submitter Name', width = 300, minwidth = 96, anchor = 'w')
+  reprintList.column('Reason', width = 200, minwidth = 96, anchor = 'w')
+  reprintList.column('Status', width = 200, minwidth = 96, anchor = 'w')
   
   scrollbar = Scrollbar(listFrame)
-  scrollbar.grid(column = 1, row = 1, sticky = 'NEWS')
+  scrollbar.grid(column = 1, row = 0, sticky = 'NEWS')
 
   reprintList.configure(yscrollcommand = scrollbar.set)
   scrollbar.config(command = reprintList.yview)
   # reprintList.bind('<Button-1>', selectItem)
 
-  reprintsRef = db.collection('reprints')
-  docs = reprintsRef.stream()
-
-  for doc in docs:
-    docObject = doc.to_dict()
-    docObject.update({'id' : doc.id})
-
-    values = [docObject['orderId'], docObject['itemId'], docObject['name'], docObject['reason'], docObject['status']]
-
-    reprintList.insert('', 'end',
-        values = values, tags = (docObject['status']))
-
-    reprintList.tag_configure('deleted', background=colors['deleted'])
-    reprintList.tag_configure('complete', background=colors['complete'])
-    reprintList.tag_configure('requested', background=colors['requested'])
-    reprintList.tag_configure('pulled', background=colors['pulled'])
-    reprintList.tag_configure('printed', background=colors['printed'])
-
+  refresh()
 
   root.mainloop()
 
