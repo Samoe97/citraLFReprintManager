@@ -40,9 +40,9 @@ class HoverButton(Label) :
             if self.colors :
                 self.root.after(50, self.config(bg = self.colors[1]))
 
-    def __init__(self, master, root, text = None, command = None, colors = ['#BBBBBB', '#DDDDDD', '#999999'], images = None, menuButton = False) :
+    def __init__(self, master, root, text = None, command = None, colors = ['#E6E6E6', '#F2F2F3', '#CCCCCB'], images = None, menuButton = False, font = None, fg = 'black') :
         super(HoverButton, self).__init__(master)
-        Label.config(self, text = text, highlightthickness = 0, bd = 0, relief = 'flat', bg = colors[0])
+        Label.config(self, text = text, highlightthickness = 0, bd = 0, relief = 'flat', bg = colors[0], font = font, fg = fg)
 
         self.root = root
 
