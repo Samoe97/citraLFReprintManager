@@ -1,4 +1,3 @@
-import time
 from tkinter import Label
 
 class HoverButton(Label) :
@@ -32,7 +31,10 @@ class HoverButton(Label) :
 
         if self.selectable == False :
             self.selected = False
-            self.root.after(100, self.on_hover(self))
+            try :
+                self.root.after(100, self.on_hover(self))
+            except :
+                print()
         else :
             self.selected = True
             if self.images.selected != None :

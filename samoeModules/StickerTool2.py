@@ -22,6 +22,8 @@ def points(inches):
 
 def executeStickerSheetGenerator(params) :
     
+    print(' - Executing sticker sheet generator.')
+
     allPrintPDFs = []
     allInfoPDFs = []
     allBarcodes = []
@@ -52,7 +54,10 @@ def executeStickerSheetGenerator(params) :
 
         pythonSheetGenerator(i, infotech, itemSpecs, params)
 
-    print(' ---- Sticker sheet generation complete! ---- \n')
+    if len(allPrintPDFs) == 0 :
+        print(' - Error: No sheets to create.')
+    else :
+        print(' - Sticker sheet generation complete.')
     
 def fileNameParser(filename):
     width = 0

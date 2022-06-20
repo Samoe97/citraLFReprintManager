@@ -1,0 +1,5 @@
+py -m PyInstaller --name=Citra-Reprint-Manager --noconsole --icon="C:\Users\jfuchs\Documents\GitHub\citraLFReprintManager\assets\citra_logo_512x512_icon.ico" C:\Users\jfuchs\Documents\GitHub\citraLFReprintManager\reprintManager.py
+
+
+
+py -m PyInstaller --name=Citra-Reprint-Manager --icon="C:\Users\jfuchs\Documents\GitHub\citraLFReprintManager\assets\citra_logo_512x512_icon.ico" C:\Users\jfuchs\Documents\GitHub\citraLFReprintManager\reprintManager.py
